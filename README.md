@@ -18,7 +18,7 @@ Since garden is a naive implementation of a store, keep the following in mind:
 
 _Not yet in clojars_
 
-[org.clojars.aptpath/gardendb "0.1.1"]
+[org.clojars.gardendb/gardendb "0.1.1"]
 
 ### Quick Start
 
