@@ -30,8 +30,6 @@ Since garden is a naive implementation of a store, keep the following in mind:
 
 ### Dependencies
 
-_Not yet in clojars_
-
 [org.clojars.gardendb/gardendb "0.1.1"]
 
 ### Quick Start
