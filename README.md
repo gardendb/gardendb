@@ -31,7 +31,7 @@ Since garden is a naive implementation of a store, keep the following in mind:
 ### Dependencies
 
 ```clojure
-[org.clojars.gardendb/gardendb "0.1.2"]
+[org.clojars.gardendb/gardendb "0.1.3"]
 ```
 
 ### Quick Start
@@ -39,14 +39,90 @@ Since garden is a naive implementation of a store, keep the following in mind:
 ```clojure
 user=> (require '[gardendb.core :as db])
 nil
-user=> (db/initialize! {:clear? true :persists? false :revisions? false})
-{:revisions? false, :clear? true, :persists? false}
-user=> (db/put! :jazz {:_id :torme :fn :mel :ln :torme :alias "The Velvet Fog"})
-:torme
+user=> (db/initialize! {:clear? true :db-name "jazz"})
+{:clear? true :db-name "jazz"}
+user=> (db/collections)
+[]
+user=> (db/documents :jazz)
+[]
+user=> (db/put! :jazz {:_id :torme :fn "Mel" :ln "Torme" :alias "The Velvet Fog" :instrument :vocals})
+nil
+user=> (db/put! :jazz {:_id :coltrane :fn "John" :ln "Coltrane" :alias "Trane" :instrument :sax})
+nil
+user=> (db/put! :jazz {:_id :grappelli :fn "Stephane" :ln "Grappelli" :instrument :violin})
+nil
+user=> (db/put! :jazz {:_id :reinhardt :fn "Jean" :ln "Reinhardt" :alias "Django" :instrument :guitar})
+nil
+user=> (db/put! :jazz {:_id :getz :fn "Stan" :ln "Getz" :alias "The Sound" :instrument :sax})
+nil
+user=> (db/collections)
+[:jazz]
+user=> (db/documents :jazz)
+[{:instrument :vocals, :ln "Torme", :_id :torme, :alias "The Velvet Fog", :fn "Mel"} {:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"} {:instrument :guitar, :ln "Reinhardt", :_id :reinhardt, :alias "Django", :fn "Jean"} {:instrument :violin, :ln "Grappelli", :_id :grappelli, :fn "Stephane"} {:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}]
+user=> (db/document-ids :jazz)
+[:torme :getz :reinhardt :grappelli :coltrane]
+user=> (db/document :jazz :torme)
+{:instrument :vocals, :ln "Torme", :_id :torme, :alias "The Velvet Fog", :fn "Mel"}
 user=> (db/pull :jazz :torme)
-{:ln :torme, :_id :torme, :alias "The Velvet Fog", :fn :mel}
+{:instrument :vocals, :ln "Torme", :_id :torme, :alias "The Velvet Fog", :fn "Mel"}
+user=> (db/pull :jazz :coltrane)
+{:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}
 user=> (db/pull :jazz :torme :alias)
 "The Velvet Fog"
+user=> (db/query :jazz {:where [#(= :sax (:instrument %))]})
+[{:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"} {:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}]
+user=> (db/query :jazz {:keys [:_id :ln] :where [#(= :sax (:instrument %))]})
+({:ln "Getz", :_id :getz} {:ln "Coltrane", :_id :coltrane})
+user=> (defn plays [i d] (= i (:instrument d)))
+#'user/plays
+user=> (def plays-sax (partial plays :sax))
+#'user/plays-sax
+user=> (def plays-guitar (partial plays :guitar))
+#'user/plays-guitar
+user=>  (db/query :jazz {:keys [:_id :ln :alias] :where [plays-guitar]})
+({:alias "Django", :ln "Reinhardt", :_id :reinhardt})
+user=> (db/query :jazz {:where [plays-guitar plays-sax] :where-predicate :and}) 
+()
+user=> (db/query-ids :jazz {:where [plays-guitar plays-sax] :where-predicate :or})
+(:getz :reinhardt :coltrane)
+user=> (db/query :jazz {:where [plays-sax] :into :sax-players})
+[{:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"} {:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}]
+user=> (db/collections)
+[:sax-players :jazz]
+user=> (db/force-persist!)
+"jazz.edn"
+user=> (db/initialize! {:clear? true :db-name "jazz"})
+{:db-name "jazz", :clear? true}
+user=> (db/collections)
+[]
+user=> (db/load!)
+:loaded
+user=> (db/collections)
+[:jazz :sax-players]
+user=> (db/documents :sax-players)
+[{:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"} {:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}]
+user=> (db/collection-option! :sax-players :volatile? true)
+{:collections {:sax-players {:volatile? true}}}
+user=> (db/info)
+{:host "", :db-name "jazz", :path "", :protocol :file, :revisions? false, :revision-levels 10, :persists? false, :options {:collections {:sax-players {:volatile? true}}}}
+user=> (db/collections)
+[:jazz :sax-players]
+user=> (db/force-persist!)
+"jazz.edn"
+user=> (db/initialize! {:clear? true :db-name "jazz"})
+{:db-name "jazz", :clear? true}
+user=> (db/collections)
+[]
+user=> (db/load!)
+:loaded
+user=> (db/collections)
+[:jazz]
+user=> (db/pull :jazz :getz)
+{:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"}
+user=> (db/delete! :jazz :getz)
+:getz
+user=> (db/pull :jazz :getz)
+nil
 ```
 
 ## License
