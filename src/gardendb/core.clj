@@ -48,7 +48,7 @@
 (defn revisions! [r] (reset! revisions? r))
 (defn revision-levels! [l] (reset! revision-levels l))
 
-(def def-persists? true)
+(def def-persists? false)
 (def persists? (atom def-persists?))
 (defn persists! [p] (reset! persists? p))
 
