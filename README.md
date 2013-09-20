@@ -30,7 +30,9 @@ Since garden is a naive implementation of a store, keep the following in mind:
 
 ### Dependencies
 
+```clojure
 [org.clojars.gardendb/gardendb "0.1.2"]
+```
 
 ### Quick Start
 
