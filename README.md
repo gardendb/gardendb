@@ -3,9 +3,23 @@
 GardenDB is an in-memory, file-persisted document store for Clojure development, heavily
 influenced by CouchDB.
 
-## Usage
+GardenDB was developed for small to medium data storage needs. There are quite a few embedded
+SQL-based databases (hsqldb, sqlite, derby, et al), but no document-oriented NoSQL databases.
 
-GardenDB requires Clojure.
+GardenDB is Clojure-specific embedded database and leveraged the extensible data notation (EDN)
+format and native Clojure maps, sequences, and functions to provide an idiomatic in-memory document
+store that persists to a file.
+
+## Rationale
+
+GardenDB is the result of scratching an itch to provide a mechanism to 
+store small to medium data in Clojure with many convenience features.
+
+GardenDB provides revisioning of documents (much like CouchDB) as well as granular control via the
+idiomatic Clojure API to persist, backup, revision, and query via predicate Clojure functions (input a map,
+output true or false).
+
+## Usage
 
 Since garden is a naive implementation of a store, keep the following in mind:
 
