@@ -172,7 +172,7 @@
 ;; persist and loading funcs ---------------------------------------------------------
 
 (defn load!
-  "Loads the garden db from location (or from set db configs)."
+  "Loads the garden db from location loc (optional) or from set db configs if loc is nil."
   [& [loc]]
   (let [l (or loc (db-fn))]
     (if (.exists (java.io.File. l))
@@ -181,11 +181,19 @@
         :loaded))))
 
 (defn volatile-filter
+  "Returns a filter list for collections that are volatile (not to be persisted)."
   []
   (reduce #(if (collection-volatile? %2) (conj % %2) %) nil (collections)))
 
 (defn persist!
-  "Persists the garden db to persistent storage. Currently only supports file based."
+  "Persists the garden db to storage with optional argument map m. Currently only supports file based.
+   {:loc string-location
+    :host string-host
+    :path string-path
+    :hint keyword-hint (not currently used)
+    :force? true|false ; true for force persistence regardless of persists? db setting
+    :suppress? true|false ; true to suppress persistence regardless of persists? db setting
+  }"
   [& [{loc :loc
        proto :protocol
        host :host
@@ -422,8 +430,8 @@
     (sort-by :_revised (reduce #(conj % (%2 1)) [] dr))))
 
 (defn retrieve
-  "Returns the document with id i for the collection c if no more keys are given in & more.
-   If keys are given in & more, then the value for the ending key in & more.
+  "Returns the document with id i for the collection c if no more keys are given in '& more'.
+   If keys are given in '& more', then the value for the ending key in '& more'.
    Nil if document or keys don't exist."
   [c i & more]
   (reduce #(if % (% %2) %) (i (@store c)) more))
@@ -485,7 +493,7 @@
             (if-let [m (retrieve c id)]
               (when-let [cm (get-collection c)]
                 (swap! store assoc (keyword c) (dissoc cm id))
-                (revise! c id m)
+                (if (revise-this? c) (revise! c id m))
                 (persist!)
                 id)))))
 
@@ -498,6 +506,7 @@
     @(delete-locking! c id)))
 
 ;; query funcs --------------------------------------------------------
+
 (declare import-list-as-collection)
 
 (defn base-q
@@ -524,7 +533,8 @@
                     :where-predictate :and|:or (optional; defaults to :and)
                     :order-by :first-level-map-key-only (optional)
                     :keys [:list :of :keys :to :be :in :result]
-                    :into string ; optional; stores the result into collection specified}"
+                    :limit number-of-docs-in-result
+                    :into string ; (optional) stores the result into collection specified}"
   [& [c m]]
   (let [qm (or m {})
         and-or (or (qm :where-predicate) :and)

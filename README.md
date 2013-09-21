@@ -12,7 +12,7 @@ store that persists to a file.
 
 ## Rationale
 
-GardenDB is the result of scratching an itch to provide a mechanism to 
+GardenDB is the result of scratching an itch to provide a mechanism to
 store small to medium data in Clojure with many convenience features.
 
 GardenDB provides revisioning of documents (much like CouchDB) as well as granular control via the
@@ -20,7 +20,7 @@ idiomatic Clojure API to persist, backup, revision, and query via predicate Cloj
 output true or false).
 
 ## Documentation
-* <a href="http://gardendb.org/api/0.1.3" target="_blank">API</a>
+* <a href="http://gardendb.org/api/0.1.4" target="_blank">API</a>
 * [Wiki](http://github.com/gardendb/gardendb/wiki)
 
 ## Usage
@@ -35,7 +35,7 @@ Since garden is a naive implementation of a store, keep the following in mind:
 ### Dependencies
 
 ```clojure
-[org.clojars.gardendb/gardendb "0.1.3"]
+[org.clojars.gardendb/gardendb "0.1.4"]
 ```
 
 ### Quick Start
@@ -85,7 +85,7 @@ user=> (def plays-guitar (partial plays :guitar))
 #'user/plays-guitar
 user=>  (db/query :jazz {:keys [:_id :ln :alias] :where [plays-guitar]})
 ({:alias "Django", :ln "Reinhardt", :_id :reinhardt})
-user=> (db/query :jazz {:where [plays-guitar plays-sax] :where-predicate :and}) 
+user=> (db/query :jazz {:where [plays-guitar plays-sax] :where-predicate :and})
 ()
 user=> (db/query-ids :jazz {:where [plays-guitar plays-sax] :where-predicate :or})
 (:getz :reinhardt :coltrane)
