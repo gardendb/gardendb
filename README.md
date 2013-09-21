@@ -40,6 +40,8 @@ Since garden is a naive implementation of a store, keep the following in mind:
 
 ### Quick Start
 
+#### Initialization
+
 ```clojure
 user=> (require '[gardendb.core :as db])
 nil
@@ -49,6 +51,10 @@ user=> (db/collections)
 []
 user=> (db/documents :jazz)
 []
+```
+
+#### Adding documents
+```clojure
 user=> (db/put! :jazz {:_id :torme :fn "Mel" :ln "Torme" :alias "The Velvet Fog" :instrument :vocals})
 nil
 user=> (db/put! :jazz {:_id :coltrane :fn "John" :ln "Coltrane" :alias "Trane" :instrument :sax})
@@ -61,6 +67,10 @@ user=> (db/put! :jazz {:_id :getz :fn "Stan" :ln "Getz" :alias "The Sound" :inst
 nil
 user=> (db/collections)
 [:jazz]
+```
+
+#### Retrieving documents
+```clojure
 user=> (db/documents :jazz)
 [{:instrument :vocals, :ln "Torme", :_id :torme, :alias "The Velvet Fog", :fn "Mel"} {:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"} {:instrument :guitar, :ln "Reinhardt", :_id :reinhardt, :alias "Django", :fn "Jean"} {:instrument :violin, :ln "Grappelli", :_id :grappelli, :fn "Stephane"} {:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}]
 user=> (db/document-ids :jazz)
@@ -73,6 +83,10 @@ user=> (db/pull :jazz :coltrane)
 {:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}
 user=> (db/pull :jazz :torme :alias)
 "The Velvet Fog"
+```
+
+#### Querying 
+```clojure
 user=> (db/query :jazz {:where [#(= :sax (:instrument %))]})
 [{:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"} {:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}]
 user=> (db/query :jazz {:keys [:_id :ln] :where [#(= :sax (:instrument %))]})
@@ -85,10 +99,14 @@ user=> (def plays-guitar (partial plays :guitar))
 #'user/plays-guitar
 user=>  (db/query :jazz {:keys [:_id :ln :alias] :where [plays-guitar]})
 ({:alias "Django", :ln "Reinhardt", :_id :reinhardt})
-user=> (db/query :jazz {:where [plays-guitar plays-sax] :where-predicate :and})
+user=> (db/query :jazz {:where [plays-guitar plays-sax] :where-predicate :and}) 
 ()
 user=> (db/query-ids :jazz {:where [plays-guitar plays-sax] :where-predicate :or})
 (:getz :reinhardt :coltrane)
+```
+
+#### Query into collection
+```clojure
 user=> (db/query :jazz {:where [plays-sax] :into :sax-players})
 [{:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"} {:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}]
 user=> (db/collections)
@@ -107,6 +125,10 @@ user=> (db/collections)
 [:jazz :sax-players]
 user=> (db/documents :sax-players)
 [{:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"} {:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}]
+```
+
+#### Collection option volatile?
+```clojure
 user=> (db/collection-option! :sax-players :volatile? true)
 {:collections {:sax-players {:volatile? true}}}
 user=> (db/info)
@@ -123,14 +145,17 @@ user=> (db/load!)
 :loaded
 user=> (db/collections)
 [:jazz]
+```
+
+#### Delete documents
+```clojure
 user=> (db/document :jazz :getz)
 {:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"}
 user=> (db/delete! :jazz :getz)
 :getz
-user=> (db/pull :jazz :getz)
+user=> (db/document :jazz :getz)
 nil
 ```
-
 ## License
 
 Copyright © 2013 GardenDB.org
