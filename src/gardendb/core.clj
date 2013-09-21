@@ -161,7 +161,8 @@
   (path! def-path)
   (protocol! def-protocol)
   (revisions! def-revisions?)
-  (persists! def-persists?))
+  (persists! def-persists?)
+  (options! def-options))
 
 (defn collections
   "Returns a vector with all of the collections in the store."
@@ -213,7 +214,8 @@
     (persist! fnm)))
 
 (defn backup!
-  "Forces a backup of the db using an optional map m. Wraps persist! call."
+  "Forces a backup of the db using an optional map m. Wraps persist! call.
+   {:loc string-of-backup-location}"
   [& [m]]
   (let [nm (or m {:loc (db-fn-bak)})
         fnm (assoc nm :force? true)]
@@ -462,7 +464,17 @@
   [c]
   (retrieve-all c))
 
+(defn document-ids
+  "Returns a list of sorted document ids."
+  [c]
+  (reduce #(conj % (%2 0)) [] (get-collection c)))
+
 ;; delete funcs -------------------------------------------------------
+
+(defn delete-collection!
+  "Deletes collection c from store."
+  [c]
+  (swap! store dissoc c))
 
 (defn delete-locking!
   "Deletes the document with id for the collection. Returns a future on a lock block.
@@ -494,11 +506,24 @@
   [& [c ps and-or lim]]
   (util/base-mq (documents c) ps and-or lim))
 
+(defn filter-key
+  "Filters the keys of map m and returns a map only with keys in ks list."
+  [m ks]
+  (reduce #(if (%2 m) (assoc % %2 (%2 m))) {} ks))
+
+(defn filter-list-keys
+  "Filters the list of maps ms to return a list of map ms elements with only keys in ks list."
+  [ms ks]
+  (if ks
+    (map #(filter-key % ks) ms)
+    ms))
+
 (defn query
   "Query a collection with a query map (optional). Returns a list or vector of matching documents.
    argument map m: {:where [(fn [x] (true)) (fn [x] (false))] (optional; if no :where, return all)
                     :where-predictate :and|:or (optional; defaults to :and)
                     :order-by :first-level-map-key-only (optional)
+                    :keys [:list :of :keys :to :be :in :result]
                     :into string ; optional; stores the result into collection specified}"
   [& [c m]]
   (let [qm (or m {})
@@ -506,9 +531,11 @@
         order-by (qm :order-by)
         q-into (qm :into)
         ps (qm :where)
+        ks (qm :keys)
         lim (if (qm :limit) (if (< (qm :limit) 0) nil (qm :limit)) nil)
         qlim (if (nil? order-by) lim nil)
-        r (base-q c ps and-or qlim)]
+        ms (base-q c ps and-or qlim)
+        r (filter-list-keys ms ks)]
     (if order-by
       (let [obr (if lim
                   (take lim (sort-by order-by r))
@@ -523,6 +550,11 @@
   "Convenience function that wraps query."
   [& [c m]]
   (query c m))
+
+(defn query-ids
+  "Query that returns matching ids only as list. Requires :_id key to be in result."
+  [& [c m]]
+  (map #(:_id %) (query c m)))
 
 ;; upsert funcs -----------------------------------------------------------------------
 
