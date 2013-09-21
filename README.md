@@ -19,6 +19,10 @@ GardenDB provides revisioning of documents (much like CouchDB) as well as granul
 idiomatic Clojure API to persist, backup, revision, and query via predicate Clojure functions (input a map,
 output true or false).
 
+## Documentation
+* <a href="http://gardendb.org/api/0.1.3" target="_blank">API</a>
+* [Wiki](http://github.com/gardendb/gardendb/wiki)
+
 ## Usage
 
 Since garden is a naive implementation of a store, keep the following in mind:
