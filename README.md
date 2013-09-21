@@ -117,7 +117,7 @@ user=> (db/load!)
 :loaded
 user=> (db/collections)
 [:jazz]
-user=> (db/pull :jazz :getz)
+user=> (db/document :jazz :getz)
 {:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"}
 user=> (db/delete! :jazz :getz)
 :getz
