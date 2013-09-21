@@ -89,6 +89,8 @@ user=> (db/query :jazz {:where [plays-sax] :into :sax-players})
 [{:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"} {:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}]
 user=> (db/collections)
 [:sax-players :jazz]
+user=> (db/documents :sax-players)
+[{:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"} {:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}]
 user=> (db/force-persist!)
 "jazz.edn"
 user=> (db/initialize! {:clear? true :db-name "jazz"})
