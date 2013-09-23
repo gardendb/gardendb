@@ -1,6 +1,6 @@
 # GardenDB
 
-GardenDB is an in-memory, file-persisted document store for Clojure development, heavily
+GardenDB is an in-memory, file-persisted document store for Clojure development,
 influenced by CouchDB.
 
 GardenDB was developed for small to medium data storage needs. There are quite a few embedded
@@ -20,7 +20,7 @@ idiomatic Clojure API to persist, backup, revision, and query via predicate Cloj
 output true or false).
 
 ## Documentation
-* <a href="http://gardendb.org/api/0.1.4" target="_blank">API</a>
+* <a href="http://gardendb.org/api/0.1.5" target="_blank">API</a>
 * [Wiki](http://github.com/gardendb/gardendb/wiki)
 
 ## Usage
@@ -35,7 +35,7 @@ Since garden is a naive implementation of a store, keep the following in mind:
 ### Dependencies
 
 ```clojure
-[org.clojars.gardendb/gardendb "0.1.4"]
+[org.clojars.gardendb/gardendb "0.1.5"]
 ```
 
 ### Quick Start
@@ -85,7 +85,7 @@ user=> (db/pull :jazz :torme :alias)
 "The Velvet Fog"
 ```
 
-#### Querying 
+#### Querying
 ```clojure
 user=> (db/query :jazz {:where [#(= :sax (:instrument %))]})
 [{:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"} {:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}]
@@ -99,7 +99,7 @@ user=> (def plays-guitar (partial plays :guitar))
 #'user/plays-guitar
 user=>  (db/query :jazz {:keys [:_id :ln :alias] :where [plays-guitar]})
 ({:alias "Django", :ln "Reinhardt", :_id :reinhardt})
-user=> (db/query :jazz {:where [plays-guitar plays-sax] :where-predicate :and}) 
+user=> (db/query :jazz {:where [plays-guitar plays-sax] :where-predicate :and})
 ()
 user=> (db/query-ids :jazz {:where [plays-guitar plays-sax] :where-predicate :or})
 (:getz :reinhardt :coltrane)

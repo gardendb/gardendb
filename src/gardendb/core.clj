@@ -434,7 +434,9 @@
    If keys are given in '& more', then the value for the ending key in '& more'.
    Nil if document or keys don't exist."
   [c i & more]
-  (reduce #(if % (% %2) %) (i (@store c)) more))
+  (when-let [cdocs (@store c)]
+    (let [d (cdocs i)]
+      (reduce #(if % (% %2) %) d more))))
 
 (defn get-document
   "Returns the document with id i for the collection c if no more keys are given in & more.
@@ -513,7 +515,14 @@
   "Base query function against a collection c with prediction vector ps and
    :and :or in and-or to link the predicate results. Uses predicates[]."
   [& [c ps and-or lim]]
-  (util/base-mq (documents c) ps and-or lim))
+  (util/base-mq-sc (documents c) ps and-or lim))
+
+(defn base-qc
+  "Base query function against a collection c with prediction vector ps and
+   :and :or in and-or to link the predicate results. Uses predicates[]."
+  [& [c ps and-or lim]]
+  (println "base-qc: c " c)
+  (util/base-cq-sc (get-collection c) ps and-or lim))
 
 (defn filter-key
   "Filters the keys of map m and returns a map only with keys in ks list."
@@ -544,7 +553,7 @@
         ks (qm :keys)
         lim (if (qm :limit) (if (< (qm :limit) 0) nil (qm :limit)) nil)
         qlim (if (nil? order-by) lim nil)
-        ms (base-q c ps and-or qlim)
+        ms (base-qc c ps and-or qlim)
         r (filter-list-keys ms ks)]
     (if order-by
       (let [obr (if lim
@@ -634,6 +643,10 @@
   "Bulk import of map d."
   [d]
   (reduce #(assoc % (%2 0) (import-collection (%2 0) (%2 1))) {} d))
+
+(defn set-collection-documents!
+  [c m]
+  (swap! store assoc c m))
 
 ; initialization --------------------------------------------------------------------
 

@@ -58,12 +58,69 @@
   "Base map query function against maps in map list vector ml with predicate vector ps and
    :and :or in and-or to link the predicate reuslts."
   [& [ml ps and-or lim]]
+  (println "base-mq")
   (reduce #(if (and (not (nil? lim)) (>= (count %) lim))
              %
              (if (predicates %2 ps and-or)
                (conj % %2) %))
     []
     ml))
+
+(defn reduce-sc
+  "Reduce implementation with short-circuit scf that returns the accumulator if scf [a x] returns true."
+  ([scf rf c] (reduce-sc scf rf (first c) (rest c)))
+  ([scf rf v c]
+    (loop [a v
+           x (first c)
+           l (rest c)]
+      (if (or (empty? l) (and scf (scf a x)))
+        a
+        (recur (rf a x) (first l) (rest l))))))
+
+(defn sc-limit
+  "Short-ciruit limit used for reduce-sc as a partial. ex. (partial 42 sc-limit) for count of result set of 42."
+  [& [n a x]]
+  ; (println "sc-limit: n " n " a " a " x " x)
+  (>= (count a) n))
+
+(defn reduce-limit
+  "Reduce that short-ciruits (returns) when the count of the accumulate is n."
+  ([n rf c] (reduce-limit n rf (first c) (rest c)))
+  ([n rf v c] (reduce-sc (partial sc-limit n) rf v c)))
+
+(defn base-mq-sc
+  "Base map query function against maps in map list vector ml with predicate vector ps and
+   :and :or in and-or to link the predicate reuslts."
+  [& [ml ps and-or lim]]
+  (if lim
+    (reduce-sc (partial sc-limit lim)
+               #(if (predicates %2 ps and-or)
+                  (conj % %2)
+                  %)
+               []
+               ml)
+    (reduce #(if (predicates %2 ps and-or)
+               (conj % %2)
+               %)
+            []
+            ml)))
+
+(defn base-cq-sc
+  "Base map query function against maps in map list vector ml with predicate vector ps and
+   :and :or in and-or to link the predicate reuslts."
+  [& [cds ps and-or lim]]
+  (if lim
+    (reduce-sc (partial sc-limit lim)
+               #(if (predicates (%2 1) ps and-or)
+                  (conj % (%2 1))
+                  %)
+               []
+               cds)
+    (reduce #(if (predicates (%2 1) ps and-or)
+               (conj % (%2 1))
+               %)
+            []
+            cds)))
 
 (defn query-map-list
   "Query a map with a query map (optional). Returns a list or vector of matching documents.
@@ -81,3 +138,4 @@
     (if-not (nil? order-by)
       (if lim (take lim (sort-by order-by r)) (sort-by order-by r))
       r)))
+
