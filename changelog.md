@@ -1,5 +1,5 @@
 0.1.6 (2013/09/24)
-- fixed util/reduce-sc logic regression [bug #2](https://github.com/gardendb/gardendb/issues/2)
+- fixed util/reduce-sc logic regression [issue #2](https://github.com/gardendb/gardendb/issues/2)
 - added md5 and md5-match functions to util.clj
 - added query tests
 - cleaned up some tests
@@ -12,7 +12,7 @@
 
 
 0.1.4 (2013/09/21)
-- fixed delete! revision logic [bug #1](https://github.com/gardendb/gardendb/issues/1)
+- fixed delete! revision logic [issue #1](https://github.com/gardendb/gardendb/issues/1)
 
 0.1.3 (2013/09/20)
 - added (document-ids [c]) to return a vector of document ids for collection c
