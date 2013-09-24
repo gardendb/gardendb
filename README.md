@@ -4,14 +4,18 @@ GardenDB is an in-memory, file-persisted document store for [Clojure](http://clo
 influenced by [CouchDB](http://couchdb.apache.org).
 
 GardenDB was developed for small to medium data storage needs. There are quite a few embedded
-SQL-based databases ([hsqldb](http://hsqldb.org/), [sqlite](http://www.sqlite.org/), [derby](http://db.apache.org/derby), et al), but not many embedded document-oriented NoSQL databases.
+SQL-based databases ([hsqldb](http://hsqldb.org/), [sqlite](http://www.sqlite.org/), 
+[derby](http://db.apache.org/derby), et al), but not many embedded document-oriented NoSQL databases.
 
-GardenDB is Clojure-specific embedded database and leverages the [extensible data notation](https://github.com/edn-format/edn) (EDN) format and native Clojure maps, sequences, and functions to provide an idiomatic in-memory document
-store with persistence.
+GardenDB is Clojure-specific embedded database and leverages the 
+[extensible data notation](https://github.com/edn-format/edn) (EDN) format and native Clojure maps, sequences, 
+and functions to provide an idiomatic in-memory document store with persistence.
 
 ## Why is the name GardenDB?
 
-GardenDB was chosen since the native format of persisted Clojure data is the [extensible data notation](https://github.com/edn-format/edn) (EDN). EDN is similiar to JSON (JavaScript Object Notion), but more expressive.
+GardenDB was chosen since the native format of persisted Clojure data is 
+[extensible data notation](https://github.com/edn-format/edn) (EDN). EDN is similiar to 
+[JSON](http://en.wikipedia.org/wiki/JSON) (JavaScript Object Notion), but more expressive.
 
 EDN is pronounced 'eden', as in the [garden of eden](http://en.wikipedia.org/wiki/Garden_of_Eden), hence GardenDB.
 
@@ -42,19 +46,20 @@ Other considerations and suggestions:
 
 
 ```clojure
+; simple example of :into temp collections
 (query :a-collection {:where [#(= :some-filtering value (:key-for-filter %))] :into :temp-collection})
 (collection-option! :temp-collection :volatile? true) ; in case you forget to delete-collection! so not persisted
 (query :temp-collection {:where [#(= :check-a (:key-for-check-a %))]})
-(query :temp-collection {:where [#(= :check-a (:key-for-check-a %))]})
-(query :temp-collection {:where [#(= :check-a (:key-for-check-a %))]})
-(query :temp-collection {:where [#(= :check-a (:key-for-check-a %))]})
+(query :temp-collection {:where [#(= :check-b (:key-for-check-b %))]})
+(query :temp-collection {:where [#(= :check-c (:key-for-check-c %))]})
+(query :temp-collection {:where [#(= :check-d (:key-for-check-d %))]})
 (delete-collection! :temp-collection) ; frees up memory
 
 ```
 
 * Consider setting `persists?` to `false` and then periodically calling `(force-persist!)` to increase performance on write-intensive usage.
-* The `:limit` query directive will short-curcuit (return the query results) when reached and will not continue to apply the  `:where` predicate functions on the remainder of the unprocessed colleciton documents. The short-circuiting of the `:limit` query is **NOT** done if an `:order-by` is a query directive in the same query (see next point).
-* The `:order-by` query directive forces a full collection scan if `:limit` directive is also used in the same query map. The reason is the `:order-by` requires a `sort-by` of the *entire* result documents before the trimmed `:limit` results may be determined.
+* The `:limit` query directive will short-curcuit (return the query results) when reached and will not continue to apply the  `:where` predicate functions on the remainder of the unprocessed collection documents. The short-circuiting of the `:limit` query is **NOT** done if an `:order-by` query directive is also in the same query map (see next point).
+* The `:order-by` query directive forces a full collection scan even if `:limit` directive is also used in the same query map. The reason is the `:order-by` requires a `sort-by` of the *entire* result documents before the trimmed `:limit` results may be determined.
 
 ### Dependencies
 
