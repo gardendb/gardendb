@@ -526,7 +526,7 @@
 (defn filter-key
   "Filters the keys of map m and returns a map only with keys in ks list."
   [m ks]
-  (reduce #(if (%2 m) (assoc % %2 (%2 m))) {} ks))
+  (reduce #(if (%2 m) (assoc % %2 (%2 m)) %) {} ks))
 
 (defn filter-list-keys
   "Filters the list of maps ms to return a list of map ms elements with only keys in ks list."
@@ -536,20 +536,20 @@
     ms))
 
 (defn query
-  "Query a collection with a query map (optional). Returns a list or vector of matching documents.
-   argument map m: {:where [(fn [x] (true)) (fn [x] (false))] (optional; if no :where, return all)
+  "Query a collection with a query argument pairs. Returns a list or vector of matching documents.
+   argument pairs   :where [(fn [x] (true)) (fn [x] (false))] (optional; if no :where, return all)
                     :where-predictate :and|:or (optional; defaults to :and)
                     :order-by :first-level-map-key-only (optional)
                     :keys [:list :of :keys :to :be :in :result]
                     :limit number-of-docs-in-result
                     :into string ; (optional) stores the result into collection specified}"
-  [& [c m]]
+  [c & {:keys [where where-predicate fields keys into order-by order limit] :as m}]
   (let [qm (or m {})
         and-or (or (qm :where-predicate) :and)
         order-by (qm :order-by)
         q-into (qm :into)
         ps (qm :where)
-        ks (qm :keys)
+        ks (or (qm :keys) (qm :fields))
         lim (if (qm :limit) (if (< (qm :limit) 0) nil (qm :limit)) nil)
         qlim (if (nil? order-by) lim nil)
         ms (base-qc c ps and-or qlim)
@@ -564,15 +564,28 @@
         (if q-into (import-list-as-collection q-into r))
         r))))
 
+
+(defn query-via-map
+  "Query a collection with a query map (optional). Returns a list or vector of matching documents.
+   argument map m: {:where [(fn [x] (true)) (fn [x] (false))] (optional; if no :where, return all)
+                    :where-predictate :and|:or (optional; defaults to :and)
+                    :order-by :first-level-map-key-only (optional)
+                    :keys [:list :of :keys :to :be :in :result]
+                    :limit number-of-docs-in-result
+                    :into string ; (optional) stores the result into collection specified}"
+  [c m]
+  (apply query c (util/flatten-map m)))
+
 (defn q
   "Convenience function that wraps query."
   [& [c m]]
-  (query c m))
+  (apply query c (util/flatten-map m)))
 
 (defn query-ids
   "Query that returns matching ids only as list. Requires :_id key to be in result."
-  [& [c m]]
-  (map #(:_id %) (query c m)))
+  [c & {:as m}]
+  (map #(:_id %) (apply query c (util/flatten-map m))))
+
 
 ;; upsert funcs -----------------------------------------------------------------------
 
@@ -650,7 +663,34 @@
 ; initialization --------------------------------------------------------------------
 
 (defn initialize!
-  "Initialize db with optional settings.
+  "Initialize db with optional argument pair settings.
+    :clear? true|false ; clears or not the existing db store
+    :db-name db name ; the name of the db
+    :host string ; the host of the db
+    :path string ; the path to the db
+    :protocol string ; the protocol of the db (only supports :file currently)
+    :load? true|false ; loads the db from the parameters
+    :revisions? true|false ; if true, db level revisioning is done
+    :persists? true|false ; if true, the db is persisted on every state change
+    :revision-levels number ; if revisions? then the number of revisions kept in db (older revisions are trimmed)
+    :seed map ; a garden-compliant map to be be used to seed the db
+    :options map ; optional settings map"
+  [& {:keys [clear? persists? revision-levels host db-name path protocol revisions? load? seed options] :as m}]
+    (if clear? (clear!))
+    (if revision-levels (revision-levels! revision-levels))
+    (if host (host! host))
+    (if db-name (db-name! db-name))
+    (if path (path! path))
+    (if protocol (protocol! protocol))
+    (if revisions? (revisions! revisions?))
+    (if load? (load!))
+    (if persists? (persists! persists?))
+    (if seed (bulk-import seed))
+    (if options (options! options))
+    (dissoc m :seed))
+
+(defn initialize-map!
+  "Initialize db with optional map settings m.
    {:clear? true|false ; clears or not the existing db store
     :db-name db name ; the name of the db
     :host string ; the host of the db
@@ -661,35 +701,20 @@
     :persists? true|false ; if true, the db is persisted on every state change
     :revision-levels number ; if revisions? then the number of revisions kept in db (older revisions are trimmed)
     :seed map ; a garden-compliant map to be be used to seed the db
-    :options map ; optional settings map}"
+    :options map ; optional settings map
+   }"
   [m]
-  (let [{:keys [clear? persists? revision-levels host db-name path protocol revisions? load? seed options]} m]
-    (if clear? (clear!))
-    (if revision-levels (revision-levels! revision-levels))
-    (if host (host! host))
-    (if db-name (db-name! db-name))
-    (if path (path! path))
-    (if protocol (protocol! protocol))
-    (if revisions? (revisions! revisions?))
-    (if load? (load!))
-    (if-not (nil? persists?) (persists! persists?))
-    (if seed (bulk-import seed))
-    (if options (options! options))
-    (dissoc m :seed)))
+  (apply initialize! (util/flatten-map m)))
+
+;; (def jazz {:jazz {:torme {:_id :torme :_rev "1-a" :_v 1 :fn "Mel" :ln "Torme" :instrument :vocals :alias "The Velvet Fog"}
+;;                   :monk {:_id :monk :_rev "1-b" :_v 1 :fn "Thelonious" :ln "Monk" :instrument :sax}
+;;                   :grappelli {:_id :grappelli :_rev "1-c" :_v 1 :fn "Stephane" :ln "Grappelli" :instrument :violin}
+;;                   :coltrane {:_id :coltrane :_rev "1-d" :_v 1 :fn "John" :ln "Coltrane" :instrument :sax :alias "Trane"}}})
 
 
-(def jazz {:jazz {:torme {:_id :torme :_rev "1-a" :_v 1 :fn "Mel" :ln "Torme" :instrument :vocals}
-                  :monk {:_id :monk :_rev "1-b" :_v 1 :fn "Thelonious" :ln "Monk" :instrument :sax}
-                  :grappelli {:_id :grappelli :_rev "1-c" :_v 1 :fn "Stephane" :ln "Grappelli" :instrument :violin}
-                  :coltrane {:_id :coltrane :_rev "1-d" :_v 1 :fn "John" :ln "Coltrane" :instrument :sax}}})
+;; (defn plays
+;;   [i d]
+;;   (= i (:instrument d)))
 
-
-(initialize! {:clear? true :persists? false :revisions? false :db-name "jazz" :seed jazz})
-
-
-(query :jazz {:order-by :ln :keys [:ln]})
-
-(= '({:ln "Coltrane"} {:ln "Grappelli"} {:ln "Monk"} {:ln "Torme"})
-           (query :jazz {:order-by :ln :keys [:ln]}))
-
-
+;; (def plays-sax (partial plays :sax))
+;; (def plays-vocals (partial plays :vocals))

@@ -28,9 +28,8 @@
 
 (deftest test-delete!
   (testing "db delete!"
-    (do
       (db/clear!)
-      (db/initialize! case-test-init-db)
+      (db/initialize-map! case-test-init-db)
       (is (= 3 (count (db/documents :jazz))) "initial seed c :jazz has 3 docs")
       (is (= 4 (count (db/documents :fruit))) "intial seed c :fruit has 4 docs")
       (is (= :cherry (:_id (db/pull :fruit :cherry))) "should be a :cherry doc in :fruit")
@@ -43,4 +42,4 @@
       (is (= :banana (db/pull :fruit :banana :_id)) "should be a :banana doc in :fruit")
       (db/delete! :fruit :banana)
       (is (= 2 (count (db/documents :fruit))) ":fruit should now have 2 docs")
-      (is (nil? (db/pull :fruit :banana)) ":banana should be nil for c :fruit"))))
+      (is (nil? (db/pull :fruit :banana)) ":banana should be nil for c :fruit")))

@@ -39,10 +39,9 @@
 
 (deftest test-revisions
   (testing "db revisions"
-    (do
 
       ; intialize test db
-      (db/initialize! case-test-init-db)
+      (db/initialize-map! case-test-init-db)
 
       (let [f (java.io.File. (db/db-fn))]
 
@@ -141,4 +140,4 @@
 
         ; clean-up
         (db/clear!)
-        (io/delete-file f true)))))
+        (io/delete-file f true))))

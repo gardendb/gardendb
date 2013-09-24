@@ -4,17 +4,20 @@ GardenDB is an in-memory, file-persisted document store for [Clojure](http://clo
 influenced by [CouchDB](http://couchdb.apache.org).
 
 GardenDB was developed for small to medium data storage needs. There are quite a few embedded
-[SQL](http://en.wikipedia.org/wiki/SQL)-based databases ([hsqldb](http://hsqldb.org/), [sqlite](http://www.sqlite.org/), 
+[SQL](http://en.wikipedia.org/wiki/SQL)-based databases ([hsqldb](http://hsqldb.org/), [sqlite](http://www.sqlite.org/),
 [derby](http://db.apache.org/derby), et al), but not many embedded document-oriented [NoSQL](http://en.wikipedia.org/wiki/NoSQL) databases.
 
-GardenDB is Clojure-specific embedded database and leverages the 
-[extensible data notation](https://github.com/edn-format/edn) (EDN) format and native Clojure maps, sequences, 
+GardenDB is Clojure-specific embedded database and leverages the
+[extensible data notation](https://github.com/edn-format/edn) (EDN) format and native Clojure maps, sequences,
 and functions to provide an idiomatic in-memory document store with persistence.
+
+**GardenDB is still in alpha and changing rapidly. The API should remain the same but GardenDB is NOT for
+production use at this time. USE AT OWN RISK.**
 
 ## Why is the name GardenDB?
 
-GardenDB was chosen since the native format of persisted Clojure data is 
-[extensible data notation](https://github.com/edn-format/edn) (EDN). EDN is similiar to 
+GardenDB was chosen since the native format of persisted Clojure data is
+[extensible data notation](https://github.com/edn-format/edn) (EDN). EDN is similiar to
 [JSON](http://en.wikipedia.org/wiki/JSON) (JavaScript Object Notion), but more expressive.
 
 EDN is pronounced 'eden', as in the [garden of eden](http://en.wikipedia.org/wiki/Garden_of_Eden), hence GardenDB.
@@ -48,11 +51,11 @@ Other considerations and suggestions:
 ```clojure
 ; simple example of :into temp collections; note that setting collection as volatile is only need is db is persisted
 (collection-option! :temp-collection :volatile? true) ; in case you forget to delete-collection! so not persisted
-(query :a-collection {:where [#(= :some-filtering value (:key-for-filter %))] :into :temp-collection})
-(query :temp-collection {:where [#(= :check-a (:key-for-check-a %))]})
-(query :temp-collection {:where [#(= :check-b (:key-for-check-b %))]})
-(query :temp-collection {:where [#(= :check-c (:key-for-check-c %))]})
-(query :temp-collection {:where [#(= :check-d (:key-for-check-d %))]})
+(query :a-collection :where [#(= :some-filtering value (:key-for-filter %))] :into :temp-collection})
+(query :temp-collection :where [#(= :check-a (:key-for-check-a %))])
+(query :temp-collection :where [#(= :check-b (:key-for-check-b %))])
+(query :temp-collection :where [#(= :check-c (:key-for-check-c %))])
+(query :temp-collection :where [#(= :check-d (:key-for-check-d %))])
 (delete-collection! :temp-collection) ; frees up memory
 
 ```
@@ -65,7 +68,7 @@ Other considerations and suggestions:
 ### Dependencies
 
 ```clojure
-[org.clojars.gardendb/gardendb "0.1.6"]
+[org.clojars.gardendb/gardendb "0.1.7"]
 ```
 
 ### Quick Start
@@ -75,7 +78,7 @@ Other considerations and suggestions:
 ```clojure
 user=> (require '[gardendb.core :as db])
 nil
-user=> (db/initialize! {:clear? true :db-name "jazz"})
+user=> (db/initialize! :clear? true :db-name "jazz")
 {:clear? true :db-name "jazz"}
 user=> (db/collections)
 []
@@ -117,9 +120,9 @@ user=> (db/pull :jazz :torme :alias)
 
 #### Querying
 ```clojure
-user=> (db/query :jazz {:where [#(= :sax (:instrument %))]})
+user=> (db/query :jazz :where [#(= :sax (:instrument %))])
 [{:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"} {:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}]
-user=> (db/query :jazz {:keys [:_id :ln] :where [#(= :sax (:instrument %))]})
+user=> (db/query :jazz :keys [:_id :ln] :where [#(= :sax (:instrument %))])
 ({:ln "Getz", :_id :getz} {:ln "Coltrane", :_id :coltrane})
 user=> (defn plays [i d] (= i (:instrument d)))
 #'user/plays
@@ -127,17 +130,17 @@ user=> (def plays-sax (partial plays :sax))
 #'user/plays-sax
 user=> (def plays-guitar (partial plays :guitar))
 #'user/plays-guitar
-user=>  (db/query :jazz {:keys [:_id :ln :alias] :where [plays-guitar]})
+user=>  (db/query :jazz :keys [:_id :ln :alias] :where [plays-guitar])
 ({:alias "Django", :ln "Reinhardt", :_id :reinhardt})
-user=> (db/query :jazz {:where [plays-guitar plays-sax] :where-predicate :and})
+user=> (db/query :jazz :where [plays-guitar plays-sax] :where-predicate :and)
 ()
-user=> (db/query-ids :jazz {:where [plays-guitar plays-sax] :where-predicate :or})
+user=> (db/query-ids :jazz :where [plays-guitar plays-sax] :where-predicate :or)
 (:getz :reinhardt :coltrane)
 ```
 
 #### Query into collection
 ```clojure
-user=> (db/query :jazz {:where [plays-sax] :into :sax-players})
+user=> (db/query :jazz :where [plays-sax] :into :sax-players)
 [{:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"} {:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}]
 user=> (db/collections)
 [:sax-players :jazz]
@@ -145,7 +148,7 @@ user=> (db/documents :sax-players)
 [{:instrument :sax, :ln "Getz", :_id :getz, :alias "The Sound", :fn "Stan"} {:instrument :sax, :ln "Coltrane", :_id :coltrane, :alias "Trane", :fn "John"}]
 user=> (db/force-persist!)
 "jazz.edn"
-user=> (db/initialize! {:clear? true :db-name "jazz"})
+user=> (db/initialize! :clear? true :db-name "jazz")
 {:db-name "jazz", :clear? true}
 user=> (db/collections)
 []
@@ -167,7 +170,7 @@ user=> (db/collections)
 [:jazz :sax-players]
 user=> (db/force-persist!)
 "jazz.edn"
-user=> (db/initialize! {:clear? true :db-name "jazz"})
+user=> (db/initialize! :clear? true :db-name "jazz")
 {:db-name "jazz", :clear? true}
 user=> (db/collections)
 []

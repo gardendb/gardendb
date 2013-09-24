@@ -175,3 +175,7 @@
   [s md]
   (= md (md5 s)))
 
+(defn flatten-map
+  "Returns a flattened vector from map without flattening values."
+  [m]
+  (reduce #(conj % (%2 0) (%2 1)) [] m))

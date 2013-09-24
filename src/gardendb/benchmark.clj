@@ -11,14 +11,13 @@
 (defn benchmark-query-sc
   [& [lim p]]
   (db/initialize! {:clear? true :persists? false :revisions? false})
-  ; (db/import-collection :test (gen-docs (Math/pow 10 p)))
   (db/set-collection-documents! :test (gen-docs (Math/pow 10 p)))
   (let [start (System/currentTimeMillis)
         mid 100]
        ;  mid (Math/floor (/ (Math/pow 10 p) 7))]
-    (println "bmk-q-sc: p " p " mid " mid)
-    (db/query :test {:where [#(= (:_id %) mid)]
-                     :limit (if lim lim)})
+    (db/query :test
+              :where [#(= (:_id %) mid)]
+              :limit (if lim lim))
     (let [stop (System/currentTimeMillis)]
       {:start start
        :b :query-sc

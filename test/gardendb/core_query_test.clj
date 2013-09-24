@@ -25,7 +25,7 @@
 
 (deftest test-query
   (testing "Querying document and document elements from database."
-    (db/initialize! case-test-init-db)
+    (db/initialize-map! case-test-init-db)
 
     (is (= 4 (count (db/documents :jazz))) "initial seed c :jazz has 4 docs")
 
@@ -38,16 +38,31 @@
                      :album-list coltrane-album-list
                      :albums coltrane-albums))
 
-    (is (= 4 (count (db/query :jazz {}))) "no :where clause, all 4 docs should be returned.")
+    (is (= 4 (count (db/query :jazz))) "no :where clause, all 4 docs should be returned.")
 
-    (is (= 1 (count (db/query :jazz {:where [#(= :vocals (:instrument %))]}))) "only 1 doc returned.")
-    (is (= :torme (:_id (first (db/query :jazz {:where [#(= :vocals (:instrument %))]})))) "only :torme doc returned.")
+    (is (= 1 (count (db/query :jazz
+                              :where [#(= :vocals (:instrument %))]))) "only 1 doc returned.")
 
-    (is (= 1 (count (db/query :jazz {:where [#(= :vocals (:instrument %))] :limit 1}))) "only 1 doc returned.")
-    (is (= :torme (:_id (first (db/query :jazz {:where [#(= :vocals (:instrument %))] :limit 1})))) "only :torme doc returned.")
+    (is (= :torme (:_id (first (db/query :jazz
+                                         :where [#(= :vocals (:instrument %))])))) "only :torme doc returned.")
 
-    (is (= 1 (count (db/query :jazz {:where [#(= :vocals (:instrument %))] :limit 2}))) "only 1 doc returned.")
-    (is (= :torme (:_id (first (db/query :jazz {:where [#(= :vocals (:instrument %))] :limit 2})))) "only :torme doc returned.")
+    (is (= 1 (count (db/query :jazz
+                              :where [#(= :vocals (:instrument %))]
+                              :limit 1))) "only 1 doc returned.")
+
+    (is (= :torme (:_id (first (db/query :jazz
+                                         :where [#(= :vocals (:instrument %))]
+                                         :limit 1)))) "only :torme doc returned.")
+
+    (is (= 1 (count (db/query :jazz
+                              :where [#(= :vocals (:instrument %))]
+                              :limit 2))) "only 1 doc returned.")
+
+    (is (= :torme (:_id (first (db/query :jazz
+                                         :where [#(= :vocals (:instrument %))]
+                                         :limit 2)))) "only :torme doc returned.")
 
     (is (= '({:ln "Coltrane"} {:ln "Grappelli"} {:ln "Monk"} {:ln "Torme"})
-           (db/query :jazz {:order-by :ln :keys [:ln]})) "check :order-by")))
+           (db/query :jazz
+                     :order-by :ln
+                     :keys [:ln])) "check :order-by")))

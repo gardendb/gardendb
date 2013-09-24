@@ -29,10 +29,9 @@
 
 (deftest test-initialize!
   (testing "db initialize!"
-    (do
-      (db/initialize! case-test-init-db)
-      (doseq [p case-test-init-db]
-        (is (= (db/setting (p 0)) (p 1))))
-      (db/initialize! case-test-seeding)
-      (is (= 3 (count (db/documents :jazz))))
-      (is (= 4 (count (db/documents :fruit)))))))
+    (db/initialize-map! case-test-init-db)
+    (doseq [p case-test-init-db]
+      (is (= (db/setting (p 0)) (p 1))))
+    (db/initialize-map! case-test-seeding)
+    (is (= 3 (count (db/documents :jazz))))
+    (is (= 4 (count (db/documents :fruit))))))

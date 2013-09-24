@@ -25,7 +25,7 @@
 
 (deftest test-pull!
   (testing "Pulling document and document elements from database."
-    (db/initialize! case-test-init-db)
+    (db/initialize-map! case-test-init-db)
 
     (is (= 4 (count (db/documents :jazz))) "initial seed c :jazz has 4 docs")
 
