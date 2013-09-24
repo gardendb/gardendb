@@ -4,8 +4,8 @@ GardenDB is an in-memory, file-persisted document store for [Clojure](http://clo
 influenced by [CouchDB](http://couchdb.apache.org).
 
 GardenDB was developed for small to medium data storage needs. There are quite a few embedded
-SQL-based databases ([hsqldb](http://hsqldb.org/), [sqlite](http://www.sqlite.org/), 
-[derby](http://db.apache.org/derby), et al), but not many embedded document-oriented NoSQL databases.
+[SQL](http://en.wikipedia.org/wiki/SQL)-based databases ([hsqldb](http://hsqldb.org/), [sqlite](http://www.sqlite.org/), 
+[derby](http://db.apache.org/derby), et al), but not many embedded document-oriented [NoSQL](http://en.wikipedia.org/wiki/NoSQL) databases.
 
 GardenDB is Clojure-specific embedded database and leverages the 
 [extensible data notation](https://github.com/edn-format/edn) (EDN) format and native Clojure maps, sequences, 
@@ -42,13 +42,13 @@ Since garden is a relatively naive implementation of a store, keep the following
 
 Other considerations and suggestions:
 
-* If a logical group of documents are to be queried multiple times (ie using common filtering criteria in the `:where` clause), consider querying `:into` a collection, set the collection to `volatile?`, do subsequent queries against the volatile (non-persisted) `:into` collection, and then delete the temp collection.
+* If a logical group of documents are to be queried multiple times (ie using common filtering criteria in the `:where` clause), consider setting a temporary collection to `volatile?` (only needed if db is persisted), querying `:into` that temporary collection, querying against the temp `:into` collection for subsequent queries, and then deleting the temp collection.
 
 
 ```clojure
-; simple example of :into temp collections
-(query :a-collection {:where [#(= :some-filtering value (:key-for-filter %))] :into :temp-collection})
+; simple example of :into temp collections; note that setting collection as volatile is only need is db is persisted
 (collection-option! :temp-collection :volatile? true) ; in case you forget to delete-collection! so not persisted
+(query :a-collection {:where [#(= :some-filtering value (:key-for-filter %))] :into :temp-collection})
 (query :temp-collection {:where [#(= :check-a (:key-for-check-a %))]})
 (query :temp-collection {:where [#(= :check-b (:key-for-check-b %))]})
 (query :temp-collection {:where [#(= :check-c (:key-for-check-c %))]})
@@ -60,6 +60,7 @@ Other considerations and suggestions:
 * Consider setting `persists?` to `false` and then periodically calling `(force-persist!)` to increase performance on write-intensive usage.
 * The `:limit` query directive will short-curcuit (return the query results) when reached and will not continue to apply the  `:where` predicate functions on the remainder of the unprocessed collection documents. The short-circuiting of the `:limit` query is **NOT** done if an `:order-by` query directive is also in the same query map (see next point).
 * The `:order-by` query directive forces a full collection scan even if `:limit` directive is also used in the same query map. The reason is the `:order-by` requires a `sort-by` of the *entire* result documents before the trimmed `:limit` results may be determined.
+* Any query *without* a `:limit` directive requires a full colllection scan.
 
 ### Dependencies
 
