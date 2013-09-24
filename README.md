@@ -28,7 +28,7 @@ idiomatic Clojure API to persist, backup, revision, and query via predicate Cloj
 output true or false).
 
 ## Documentation
-* <a href="http://gardendb.org/api/0.1.6" target="_blank">API</a>
+* <a href="http://gardendb.org/api/" target="_blank">API</a>
 * [Wiki](http://github.com/gardendb/gardendb/wiki)
 
 ## Usage
