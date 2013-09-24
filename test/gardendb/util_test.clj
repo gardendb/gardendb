@@ -30,20 +30,20 @@
 (def ptm2 {:a :apple :tau 6.28 :pi 3.14 :j "Jacks" :color :red :foods [:seafood :artichokes]})
 (def ptm3 {:a :apple :tau 6.28 :pi 3.14 :j "Jacks" :color :red :foods [:steak :seafood :chicken]})
 
-(defn has? [a x] (not (nil? (a x))))
-(defn has-not? [a x] (not (has? a x)))
+(defn h? [a x] (not (nil? (a x))))
+(defn h-not? [a x] (not (h? a x)))
 
-(def has-ans? (partial has? :ans))
-(def no-ans? (partial has-not? :ans))
-(def has-jack? (partial has? :j))
-(def has-tau? (partial has? :tau))
-(def has-pi? (partial has? :pi))
+(def has-ans? (partial h? :ans))
+(def no-ans? (partial h-not? :ans))
+(def has-jack? (partial h? :j))
+(def has-tau? (partial h? :tau))
+(def has-pi? (partial h? :pi))
 
 (defn red-color? [x] (= :red (:color x)))
 
 
 (defn eats? [f x] (if (:foods x)
-                    (in-list? f (:foods x))
+                    (has? (:foods x) f)
                     false))
 
 (def eats-seafood? (partial eats? :seafood))

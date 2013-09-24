@@ -1,6 +1,6 @@
 (ns gardendb.core-initialize-test
   (:use clojure.test)
-  (require [gardendb.core :as db]))
+  (:require [gardendb.core :as db]))
 
 (def fruit {:fruit
                {:cherry {:_id :cherry :_rev "1-a" :_v 1 :color :red :region :temperate}

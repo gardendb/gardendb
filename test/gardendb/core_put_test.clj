@@ -1,6 +1,6 @@
 (ns gardendb.core-put-test
   (:use clojure.test)
-  (require [gardendb.core :as db]))
+  (:require [gardendb.core :as db]))
 
 (deftest test-put!
   (testing "Putting a document into a database"

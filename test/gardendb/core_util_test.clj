@@ -1,6 +1,6 @@
 (ns gardendb.core-util-test
   (:use clojure.test)
-  (require [gardendb.core :as db]))
+  (:require [gardendb.core :as db]))
 
 (def cases-next-rev-seq
   [{:pv nil :_x 1}

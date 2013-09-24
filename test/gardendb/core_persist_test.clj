@@ -1,6 +1,6 @@
 (ns gardendb.core-persist-test
   (:use clojure.test)
-  (require [gardendb.core :as db]
+  (:require [gardendb.core :as db]
            [clojure.java.io :as io]))
 
 (def fruit {:fruit

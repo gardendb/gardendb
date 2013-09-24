@@ -521,7 +521,6 @@
   "Base query function against a collection c with prediction vector ps and
    :and :or in and-or to link the predicate results. Uses predicates[]."
   [& [c ps and-or lim]]
-  (println "base-qc: c " c)
   (util/base-cq-sc (get-collection c) ps and-or lim))
 
 (defn filter-key
@@ -677,3 +676,20 @@
     (if seed (bulk-import seed))
     (if options (options! options))
     (dissoc m :seed)))
+
+
+(def jazz {:jazz {:torme {:_id :torme :_rev "1-a" :_v 1 :fn "Mel" :ln "Torme" :instrument :vocals}
+                  :monk {:_id :monk :_rev "1-b" :_v 1 :fn "Thelonious" :ln "Monk" :instrument :sax}
+                  :grappelli {:_id :grappelli :_rev "1-c" :_v 1 :fn "Stephane" :ln "Grappelli" :instrument :violin}
+                  :coltrane {:_id :coltrane :_rev "1-d" :_v 1 :fn "John" :ln "Coltrane" :instrument :sax}}})
+
+
+(initialize! {:clear? true :persists? false :revisions? false :db-name "jazz" :seed jazz})
+
+
+(query :jazz {:order-by :ln :keys [:ln]})
+
+(= '({:ln "Coltrane"} {:ln "Grappelli"} {:ln "Monk"} {:ln "Torme"})
+           (query :jazz {:order-by :ln :keys [:ln]}))
+
+

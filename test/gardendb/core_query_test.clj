@@ -1,4 +1,4 @@
-(ns gardendb.core-pull-test
+(ns gardendb.core-query-test
   (:use clojure.test)
   (:require [gardendb.core :as db]))
 
@@ -23,8 +23,8 @@
                       :live-at-birdland {:title "Live at Birdland" :released 1964}})
 
 
-(deftest test-pull!
-  (testing "Pulling document and document elements from database."
+(deftest test-query
+  (testing "Querying document and document elements from database."
     (db/initialize! case-test-init-db)
 
     (is (= 4 (count (db/documents :jazz))) "initial seed c :jazz has 4 docs")
@@ -38,15 +38,16 @@
                      :album-list coltrane-album-list
                      :albums coltrane-albums))
 
-    (is (db/pull :jazz :coltrane :album-list) "coltrane album list should be populated.")
-    (is (db/pull :jazz :coltrane :albums) "coltrane albums should be populated.")
+    (is (= 4 (count (db/query :jazz {}))) "no :where clause, all 4 docs should be returned.")
 
-    (let [album-list (db/pull :jazz :coltrane :album-list)]
-      (is (= 4 (count album-list)) "albums should be 4")
-      (is (= '(1960 1961 1964 1967) (map #(:released %) (sort-by :released album-list)))))
+    (is (= 1 (count (db/query :jazz {:where [#(= :vocals (:instrument %))]}))) "only 1 doc returned.")
+    (is (= :torme (:_id (first (db/query :jazz {:where [#(= :vocals (:instrument %))]})))) "only :torme doc returned.")
 
-    ; drill down pull tests
-    (is (= (db/pull :jazz :coltrane :albums :my-fav-things :title) "My Favorite Things"))
-    (is (= (db/pull :jazz :coltrane :albums :giant-steps :title) "Giant Steps"))
-    (is (= (db/pull :jazz :coltrane :albums :expression :title) "Expression"))
-    (is (= (db/pull :jazz :coltrane :albums :live-at-birdland :title) "Live at Birdland"))))
+    (is (= 1 (count (db/query :jazz {:where [#(= :vocals (:instrument %))] :limit 1}))) "only 1 doc returned.")
+    (is (= :torme (:_id (first (db/query :jazz {:where [#(= :vocals (:instrument %))] :limit 1})))) "only :torme doc returned.")
+
+    (is (= 1 (count (db/query :jazz {:where [#(= :vocals (:instrument %))] :limit 2}))) "only 1 doc returned.")
+    (is (= :torme (:_id (first (db/query :jazz {:where [#(= :vocals (:instrument %))] :limit 2})))) "only :torme doc returned.")
+
+    (is (= '({:ln "Coltrane"} {:ln "Grappelli"} {:ln "Monk"} {:ln "Torme"})
+           (db/query :jazz {:order-by :ln :keys [:ln]})) "check :order-by")))

@@ -58,7 +58,7 @@
   "Base map query function against maps in map list vector ml with predicate vector ps and
    :and :or in and-or to link the predicate reuslts."
   [& [ml ps and-or lim]]
-  (println "base-mq")
+  ; (println "base-mq")
   (reduce #(if (and (not (nil? lim)) (>= (count %) lim))
              %
              (if (predicates %2 ps and-or)
@@ -73,14 +73,32 @@
     (loop [a v
            x (first c)
            l (rest c)]
-      (if (or (empty? l) (and scf (scf a x)))
+      (if (or (and (nil? x) (empty? l)) (and scf (scf a x)))
         a
         (recur (rf a x) (first l) (rest l))))))
+
+(defn reduce-sc-on-true
+  "Reduce will short circuit on first true, returns false otherwise."
+  [f l]
+  (reduce-sc (fn [a x] a) f false l))
+
+(defn has?
+  "Returns true if list l has element x, otherwise returns false."
+  [l x]
+  (if l
+    (reduce-sc-on-true #(= x %2) l)
+    false))
+
+(defn intersects?
+  "Returns true if list a intersects with at least one element of list b, otherwise return false."
+  [a b]
+  (if (and a b)
+    (reduce-sc-on-true (fn [ac x] (has? b x)) a)
+    false))
 
 (defn sc-limit
   "Short-ciruit limit used for reduce-sc as a partial. ex. (partial 42 sc-limit) for count of result set of 42."
   [& [n a x]]
-  ; (println "sc-limit: n " n " a " a " x " x)
   (>= (count a) n))
 
 (defn reduce-limit
@@ -138,4 +156,22 @@
     (if-not (nil? order-by)
       (if lim (take lim (sort-by order-by r)) (sort-by order-by r))
       r)))
+
+(defn md5
+  "Returns a md5 checksum for the string token."
+  [token]
+  (let [hash-bytes
+        (doto (java.security.MessageDigest/getInstance "MD5")
+          (.reset)
+          (.update (.getBytes token)))]
+
+    (.toString
+     (new java.math.BigInteger 1 (.digest hash-bytes)) ; Positive and the size of the number
+
+     16))) ; Use base16 i.e. hex
+
+(defn md5-match?
+  "Returns true if the md5 of string s matches md5 token md."
+  [s md]
+  (= md (md5 s)))
 

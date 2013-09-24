@@ -1,6 +1,6 @@
 (ns gardendb.core-empty-test
   (:use clojure.test)
-  (require [gardendb.core :as db]))
+  (:require [gardendb.core :as db]))
 
 (deftest test-empty-db
   (testing "db starts empty"

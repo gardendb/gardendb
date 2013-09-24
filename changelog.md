@@ -1,7 +1,14 @@
+0.1.6 (2013/09/24)
+- fixed util/reduce-sc logic regression [bug #2](https://github.com/gardendb/gardendb/issues/2)
+- added md5 and md5-match functions to util.clj
+- added query tests
+- cleaned up some tests
+- updated and added to README.md
+
 0.1.5 (2013/09/22)
 - added better query reduce short-circuiting (if no :order-by is given in query map)
 - added gardendb.benchmark for benchmarking
-- refactored query to pull candidate docs directly from store
+- refactored query to pull candidate docs directly from store for better performance
 
 
 0.1.4 (2013/09/21)

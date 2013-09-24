@@ -1,41 +1,65 @@
 # GardenDB
 
-GardenDB is an in-memory, file-persisted document store for Clojure development,
-influenced by CouchDB.
+GardenDB is an in-memory, file-persisted document store for [Clojure](http://clojure.org) development,
+influenced by [CouchDB](http://couchdb.apache.org).
 
 GardenDB was developed for small to medium data storage needs. There are quite a few embedded
-SQL-based databases (hsqldb, sqlite, derby, et al), but no document-oriented NoSQL databases.
+SQL-based databases ([hsqldb](http://hsqldb.org/), [sqlite](http://www.sqlite.org/), [derby](http://db.apache.org/derby), et al), but not many embedded document-oriented NoSQL databases.
 
-GardenDB is Clojure-specific embedded database and leveraged the extensible data notation (EDN)
-format and native Clojure maps, sequences, and functions to provide an idiomatic in-memory document
-store that persists to a file.
+GardenDB is Clojure-specific embedded database and leverages the [extensible data notation](https://github.com/edn-format/edn) (EDN) format and native Clojure maps, sequences, and functions to provide an idiomatic in-memory document
+store with persistence.
+
+## Why is the name GardenDB?
+
+GardenDB was chosen since the native format of persisted Clojure data is the [extensible data notation](https://github.com/edn-format/edn) (EDN). EDN is similiar to JSON (JavaScript Object Notion), but more expressive.
+
+EDN is pronounced 'eden', as in the [garden of eden](http://en.wikipedia.org/wiki/Garden_of_Eden), hence GardenDB.
 
 ## Rationale
 
-GardenDB is the result of scratching an itch to provide a mechanism to
-store small to medium data in Clojure with many convenience features.
+GardenDB is designed for small to medium data in Clojure and has many convenience features.
 
 GardenDB provides revisioning of documents (much like CouchDB) as well as granular control via the
 idiomatic Clojure API to persist, backup, revision, and query via predicate Clojure functions (input a map,
 output true or false).
 
 ## Documentation
-* <a href="http://gardendb.org/api/0.1.5" target="_blank">API</a>
+* <a href="http://gardendb.org/api/0.1.6" target="_blank">API</a>
 * [Wiki](http://github.com/gardendb/gardendb/wiki)
 
 ## Usage
 
-Since garden is a naive implementation of a store, keep the following in mind:
+Since garden is a relatively naive implementation of a store, keep the following in mind:
 
 * There is only one (1) db with zero or many collections of documents.
-* Revisions are maintained (if db is initialize! with :revisions? true; or (db/revisions! true)).
-* For sub-secord queries, keep the document counts to below 100k per collection. 1M collection queries are 1-10s.
-* If persisted to file, *EACH* modification (upsert, delete) will write the entire db to the file system.
+* Revisions are maintained (if db `(initialize!)` with `:revisions?` `true`; or `(db/revisions! true)`).
+* For sub-secord queries, keep document counts to below 100k per collection. 1M collection queries are 1-10s.
+* If the db is persisted to file via `persists?` being set to true, **EACH** modification (upsert, delete) will write the entire db to the file system.
+
+Other considerations and suggestions:
+
+* If a logical group of documents are to be queried multiple times (ie using common filtering criteria in the `:where` clause), consider querying `:into` a collection, set the collection to `volatile?`, do subsequent queries against the volatile (non-persisted) `:into` collection, and then delete the temp collection.
+
+
+```clojure
+(query :a-collection {:where [#(= :some-filtering value (:key-for-filter %))] :into :temp-collection})
+(collection-option! :temp-collection :volatile? true) ; in case you forget to delete-collection! so not persisted
+(query :temp-collection {:where [#(= :check-a (:key-for-check-a %))]})
+(query :temp-collection {:where [#(= :check-a (:key-for-check-a %))]})
+(query :temp-collection {:where [#(= :check-a (:key-for-check-a %))]})
+(query :temp-collection {:where [#(= :check-a (:key-for-check-a %))]})
+(delete-collection! :temp-collection) ; frees up memory
+
+```
+
+* Consider setting `persists?` to `false` and then periodically calling `(force-persist!)` to increase performance on write-intensive usage.
+* The `:limit` query directive will short-curcuit (return the query results) when reached and will not continue to apply the  `:where` predicate functions on the remainder of the unprocessed colleciton documents. The short-circuiting of the `:limit` query is **NOT** done if an `:order-by` is a query directive in the same query (see next point).
+* The `:order-by` query directive forces a full collection scan if `:limit` directive is also used in the same query map. The reason is the `:order-by` requires a `sort-by` of the *entire* result documents before the trimmed `:limit` results may be determined.
 
 ### Dependencies
 
 ```clojure
-[org.clojars.gardendb/gardendb "0.1.5"]
+[org.clojars.gardendb/gardendb "0.1.6"]
 ```
 
 ### Quick Start
