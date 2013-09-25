@@ -1,11 +1,12 @@
-0.1.8 (2013/09)
-- updated doc for query and query-via-map to include :field synonym for :keys
+0.1.8 (2013/09/25)
+- updated doc for query and query-via-map to include :fields synonym for :keys
 - fixed initialize! call in benchmark
 - refactored func q to consume named pair args
 - removed and consolidated functional synonyms (get-collection -> collection, put-document! -> put!, et al)
+- updated misc func docs
 
 0.1.7 (2013/09/24)
-- fix logic in core/filter-key reduce that did not pass doc map forward [issue #3](https://github.com/gardendb/gardendb/issues/3)
+- fixed logic in core/filter-key reduce that did not pass doc map forward [issue #3](https://github.com/gardendb/gardendb/issues/3)
 - refactored core query and initialize! function arg passing to default to named argument pairs
 - added util/flatten-map to flatten map into vector without flattening values
 - fixed README.md to reflect query and initialize func arg passing as named argument pairs

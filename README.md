@@ -11,7 +11,7 @@ GardenDB is Clojure-specific embedded database and leverages the
 [extensible data notation](https://github.com/edn-format/edn) (EDN) format and native Clojure maps, sequences,
 and functions to provide an idiomatic in-memory document store with persistence.
 
-**GardenDB is still in alpha and changing rapidly. The API should remain the same but GardenDB is NOT for
+**GardenDB is still in alpha and changing rapidly. The API is somewhat stable but may change. GardenDB is NOT for
 production use at this time. USE AT OWN RISK.**
 
 ## Why is the name GardenDB?
@@ -68,7 +68,7 @@ Other considerations and suggestions:
 ### Dependencies
 
 ```clojure
-[org.clojars.gardendb/gardendb "0.1.7"]
+[org.clojars.gardendb/gardendb "0.1.8"]
 ```
 
 ### Quick Start
