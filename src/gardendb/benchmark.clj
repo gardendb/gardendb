@@ -39,7 +39,7 @@
   (reduce #(conj % (cycle-benchmark %2)) [] benchmarks))
 
 
-(pprint (benchmark))
+;; (pprint (benchmark))
 
 ;; (db/set-collection-documents! :test (gen-docs 8))
 
