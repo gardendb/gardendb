@@ -231,30 +231,27 @@
 
 ;; collection funcs --------------------------------------------------------
 
-(defn get-collection
+(defn collection
   "Retrieves the collection from the db."
   [c]
   (if c ((keyword c) @store)))
 
-(defn collection
-  "Retrieves the collection from the db."
-  [c]
-  (get-collection c))
-
-(defn add-collection
+(defn add-collection!
   "Returns either the existing collection or the created collection if the collection doesn't exist."
   [c]
-  (if (nil? (get-collection c))
+  (if (nil? (collection c))
     (swap! store assoc (keyword c) {}))
   ((keyword c) @store))
 
 ;; revision funcs ----------------------------------------------------------
 
 (defn revisions
-  "Returns the revisions of collection c for document :_id i as a list sorted by :_v version."
-  [c i]
-  (if (and c i)
-    (sort-by :_v (reduce #(conj % (%2 1)) [] ((keyword i) ((keyword c) (@store :_revisions)))))))
+  "Retrieves all revisions as map. Should only be used by GardenDB internals, metadata processing, or for troubleshooting."
+  [c id]
+  (let [rc (:_revisions @store)
+        cm (or ((keyword c ) rc) {})
+        dr (or (cm id) {})]
+    (sort-by :_v (reduce #(conj % (%2 1)) [] dr))))
 
 (defn revision-versions
   "Returns the :_v version numbers for document :_id i in collection c as a list."
@@ -369,7 +366,7 @@
   (future (locking mod-lock
             (if c
               (let [kc (keyword c)
-                    rc (get-collection :_revisions)
+                    rc (collection :_revisions)
                     crm (or (kc rc) {id {}})
                     dr (or (crm id) {})]
                 (swap! store assoc :_revisions
@@ -421,14 +418,6 @@
 
 ;; retrieval funcs ----------------------------------------------------------------
 
-(defn retrieve-all-revisions
-  "Retrieves all revisions as map. Should only be used by GardenDB internals, metadata processing, or for troubleshooting."
-  [c id]
-  (let [rc (:_revisions @store)
-        cm (or ((keyword c ) rc) {})
-        dr (or (cm id) {})]
-    (sort-by :_revised (reduce #(conj % (%2 1)) [] dr))))
-
 (defn retrieve
   "Returns the document with id i for the collection c if no more keys are given in '& more'.
    If keys are given in '& more', then the value for the ending key in '& more'.
@@ -437,13 +426,6 @@
   (when-let [cdocs (@store c)]
     (let [d (cdocs i)]
       (reduce #(if % (% %2) %) d more))))
-
-(defn get-document
-  "Returns the document with id i for the collection c if no more keys are given in & more.
-   If keys are given in & more, then the value for the ending key in & more.
-   Nil if document or keys don't exist. Convenience func for retrieve."
-  [c i & more]
-  (apply retrieve c i more))
 
 (defn document
   "Returns the document with id i for the collection c if no more keys are given in & more.
@@ -459,25 +441,15 @@
   [c i & more]
   (apply retrieve c i more))
 
-(defn retrieve-all
+(defn documents
   "Returns a vector of *ALL* documents in collection c."
   [c]
-  (reduce #(conj % (assoc (%2 1) :_id (%2 0))) [] (get-collection c)))
-
-(defn get-all-documents
-  "Returns a vector of *ALL* documents in collection c. Wraps retrieve-all."
-  [c]
-  (retrieve-all c))
-
-(defn documents
-  "Returns a vector of *ALL* documents in collection c. Wraps retrieve-all."
-  [c]
-  (retrieve-all c))
+  (reduce #(conj % (assoc (%2 1) :_id (%2 0))) [] (collection c)))
 
 (defn document-ids
   "Returns a list of sorted document ids."
   [c]
-  (reduce #(conj % (%2 0)) [] (get-collection c)))
+  (reduce #(conj % (%2 0)) [] (collection c)))
 
 ;; delete funcs -------------------------------------------------------
 
@@ -493,7 +465,7 @@
   [c id]
   (future (locking mod-lock
             (if-let [m (retrieve c id)]
-              (when-let [cm (get-collection c)]
+              (when-let [cm (collection c)]
                 (swap! store assoc (keyword c) (dissoc cm id))
                 (if (revise-this? c) (revise! c id m))
                 (persist!)
@@ -521,7 +493,7 @@
   "Base query function against a collection c with prediction vector ps and
    :and :or in and-or to link the predicate results. Uses predicates[]."
   [& [c ps and-or lim]]
-  (util/base-cq-sc (get-collection c) ps and-or lim))
+  (util/base-cq-sc (collection c) ps and-or lim))
 
 (defn filter-key
   "Filters the keys of map m and returns a map only with keys in ks list."
@@ -536,13 +508,14 @@
     ms))
 
 (defn query
-  "Query a collection with a query argument pairs. Returns a list or vector of matching documents.
-   argument pairs   :where [(fn [x] (true)) (fn [x] (false))] (optional; if no :where, return all)
-                    :where-predictate :and|:or (optional; defaults to :and)
-                    :order-by :first-level-map-key-only (optional)
+  "Query a collection with argument pairs. Every query pairs is optional. Returns a list or vector of matching documents.
+   argument pairs   :where [(fn [x] (true)) (fn [x] (false))] (if no :where, return all)
+                    :where-predictate :and|:or (defaults to :and)
+                    :order-by :first-level-map-key-only
                     :keys [:list :of :keys :to :be :in :result]
+                    :fields [:list :of :keys :to :be :in :result] ; synonym for :keys
                     :limit number-of-docs-in-result
-                    :into string ; (optional) stores the result into collection specified}"
+                    :into string ; stores the result into collection specified"
   [c & {:keys [where where-predicate fields keys into order-by order limit] :as m}]
   (let [qm (or m {})
         and-or (or (qm :where-predicate) :and)
@@ -566,19 +539,20 @@
 
 
 (defn query-via-map
-  "Query a collection with a query map (optional). Returns a list or vector of matching documents.
-   argument map m: {:where [(fn [x] (true)) (fn [x] (false))] (optional; if no :where, return all)
-                    :where-predictate :and|:or (optional; defaults to :and)
-                    :order-by :first-level-map-key-only (optional)
+  "Query a collection with a query map. Every query map setting is optional. Returns a list or vector of matching documents.
+   argument map m: {:where [(fn [x] (true)) (fn [x] (false))] (if no :where, return all)
+                    :where-predictate :and|:or (defaults to :and)
+                    :order-by :first-level-map-key-only
                     :keys [:list :of :keys :to :be :in :result]
+                    :fields [:list :of :keys :to :be :in :result] ; synonym for :keys
                     :limit number-of-docs-in-result
-                    :into string ; (optional) stores the result into collection specified}"
+                    :into string ; stores the result into collection specified}"
   [c m]
   (apply query c (util/flatten-map m)))
 
 (defn q
   "Convenience function that wraps query."
-  [& [c m]]
+  [c & {:as  m}]
   (apply query c (util/flatten-map m)))
 
 (defn query-ids
@@ -586,13 +560,16 @@
   [c & {:as m}]
   (map #(:_id %) (apply query c (util/flatten-map m))))
 
-
 ;; upsert funcs -----------------------------------------------------------------------
 
 (defn upsert-locking!
   "Updates/inserts (upserts) document map m into collection c with revision r.
    The revision may be set to :force which will upsert without checking previous revision.
-   Returns a future."
+   If db revisions? is false and/or collection c option revisions? is false, then revision r is not needed or checked.
+   Returns a future.
+     args map: {:pre upsert-func-check ; func returns non-nil if the upsert pre-condition fails
+                :suppress? true|false ; args pass through to persist!; if true, persistance will be suppressed (no file write)
+     NOTE: see persists! function doc for all arguments available to be passed through to persists!."
   [& [c m r args]]
   (let [pre-f (:pre args)
         pre-f-r (if pre-f (pre-f c m r args))]
@@ -600,7 +577,7 @@
       (throw (Exception. (str "Pre-upsert condition failed: " pre-f-r)))
       (future (locking mod-lock
                 (let [kc (keyword c)
-                      cm (add-collection kc)
+                      cm (add-collection! kc)
                       id (or (m :_id) (:id m) (util/random-uuid))
                       pm (cm id)
                       rv (revise-this? kc)
@@ -617,23 +594,12 @@
 
 (defn upsert!
   "Updates/inserts (upserts) document map m into collection c with revision r.
-   The revision may be set to :force which will upsert without checking previous revision."
+   The revision may be set to :force which will upsert without checking previous revision.
+   Calls upsert-locking! and dereferences the returned future to enforce synchronous processing/mvcc."
   [& [c m r]]
   @(upsert-locking! c m r))
 
-(defn put-document
-  "Updates/inserts (upserts) document map m into collection c with revision r.
-   The revision may be set to :force which will upsert without checking previous revision."
-  [& [c m r]]
-  (upsert! c m r))
-
 (defn put!
-  "Updates/inserts (upserts) document map m into collection c with revision r.
-   The revision may be set to :force which will upsert without checking previous revision."
-  [& [c m r]]
-  (upsert! c m r))
-
-(defn post!
   "Updates/inserts (upserts) document map m into collection c with revision r.
    The revision may be set to :force which will upsert without checking previous revision."
   [& [c m r]]
@@ -652,7 +618,7 @@
   (persist!))
 
 (defn bulk-import
-  "Bulk import of map d."
+  "Bulk import of map d. Map d {:coll-a {:doc-1a {:_id :doc-1a ...}} :coll-b {:doc-1b {:_id :doc-1b ...}}}"
   [d]
   (reduce #(assoc % (%2 0) (import-collection (%2 0) (%2 1))) {} d))
 

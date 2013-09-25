@@ -1,4 +1,4 @@
-(defproject org.clojars.gardendb/gardendb "0.1.7"
+(defproject org.clojars.gardendb/gardendb "0.1.8"
   :description "GardenDB is an embedded document store specifically for Clojure, influenced by CouchDB."
   :url "http://gardendb.org"
   :license {:name "Eclipse Public License"
