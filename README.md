@@ -11,6 +11,28 @@ GardenDB is Clojure-specific embedded database and leverages the
 [extensible data notation](https://github.com/edn-format/edn) (EDN) format and native Clojure maps, sequences,
 and functions to provide an idiomatic in-memory document store with persistence.
 
+## Rationale
+
+GardenDB is designed for small to medium data in Clojure and has many convenience features.
+
+GardenDB provides document-oriented, NoSQL function, including revisioning of documents (much like CouchDB) as well as granular control via the idiomatic Clojure API to persist, backup, revision, and query via predicate Clojure functions (input a map, output true or false).
+
+## Disclaimer
+
+**GardenDB is still in alpha and may change significantly. The API is somewhat stable but may change. GardenDB is NOT for production use at this time. USE AT OWN RISK.**
+
+## Why is the name GardenDB?
+
+GardenDB was chosen since the native format of persisted Clojure data is
+[extensible data notation](https://github.com/edn-format/edn) (EDN). EDN is similiar to
+[JSON](http://en.wikipedia.org/wiki/JSON) (JavaScript Object Notion), but more expressive.
+
+EDN is pronounced 'eden', as in the [garden of eden](http://en.wikipedia.org/wiki/Garden_of_Eden), hence GardenDB.
+
+## Documentation
+* <a href="http://gardendb.org/api/" target="_blank">API</a>
+* [Wiki](http://github.com/gardendb/gardendb/wiki)
+
 ## Use Cases
 * local persisted cache
 * single instance web sites
@@ -19,8 +41,8 @@ and functions to provide an idiomatic in-memory document store with persistence.
 * ?
 
 ## Caveats
-* no indexing [may in the future] (entire collection scans per query, but intermediate temporary collections may be used (like views in CouchDB); see Usage temporary collection :into section below)
-* Single in-memory instance only (see below)
+* no indexing (future?)  (entire collection scans per query, but intermediate temporary collections may be used (like views in CouchDB); see Usage temporary collection :into section below)
+* single in-memory instance only (see below)
 
 ## In-Memory, Single Instance Limitations (currently)
 
@@ -38,40 +60,17 @@ The implementation in GardenDB is similiar to how CouchDB handles MVCC.
 
 The MVCC mechanism is in-place for the distributed components/functionality but resources to develop the distributed capability have not been allocated. 
 
-## Disclaimer
-
-**GardenDB is still in alpha and may change significantly. The API is somewhat stable but may change. GardenDB is NOT for production use at this time. USE AT OWN RISK.**
-
-## Why is the name GardenDB?
-
-GardenDB was chosen since the native format of persisted Clojure data is
-[extensible data notation](https://github.com/edn-format/edn) (EDN). EDN is similiar to
-[JSON](http://en.wikipedia.org/wiki/JSON) (JavaScript Object Notion), but more expressive.
-
-EDN is pronounced 'eden', as in the [garden of eden](http://en.wikipedia.org/wiki/Garden_of_Eden), hence GardenDB.
-
-## Rationale
-
-GardenDB is designed for small to medium data in Clojure and has many convenience features.
-
-GardenDB provides revisioning of documents (much like CouchDB) as well as granular control via the
-idiomatic Clojure API to persist, backup, revision, and query via predicate Clojure functions (input a map,
-output true or false).
-
-## Documentation
-* <a href="http://gardendb.org/api/" target="_blank">API</a>
-* [Wiki](http://github.com/gardendb/gardendb/wiki)
-
-## Future Enhancements
+## Future Tasking
 * Currently the gardendb is stored in a monolithic, single file. Moving forward, developers should have the option of persisting the db as a file system folder, with collections as folders underneath the db folder, and each document in the collection will have a folder underneath their collection folder. This will allow incremental persistence of documents without forcing unnecessary i/o to write the entire db every persist (upsert/delete).
 * Also allow an option to store in a relational database (Oracle, MySQL, SQL Server, PostgreSQL) since many developers do not control their enterprise data storage layer and may wish to use GardenDB for storage.
+* Determine if need for a yet-another-distributed-nosql-store (tm) before committing to making GardenDB distributed
 
 ## Usage
 
 Since garden is a relatively naive implementation of a store, keep the following in mind:
 
 * There is only one (1) db with zero or many collections of documents.
-* Revisions are maintained (if db `(initialize!)` with `:revisions?` `true`; or `(db/revisions! true)`).
+* Revisions are maintained (if db `(initialize!)` with `:revisions ?true`; or `(db/revisions! true)`).
 * For sub-secord queries, keep document counts to below 100k per collection. 1M collection queries are 1-10s.
 * If the db is persisted to file via `persists?` being set to true, **EACH** modification (upsert, delete) will write the entire db to the file system.
 
@@ -82,6 +81,9 @@ Other considerations and suggestions:
 
 ```clojure
 ; simple example of :into temp collections; note that setting collection as volatile is only need is db is persisted
+; note: this code block is for illustrative purposes only. 
+;       :check-x, :key-for-filter, :key-for-check-x, :a-collection and :temp-collection 
+;       would need to be specific to your domain
 (collection-option! :temp-collection :volatile? true) ; in case you forget to delete-collection! so not persisted
 (query :a-collection :where [#(= :some-filtering value (:key-for-filter %))] :into :temp-collection})
 (query :temp-collection :where [#(= :check-a (:key-for-check-a %))])
