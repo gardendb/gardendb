@@ -11,8 +11,36 @@ GardenDB is Clojure-specific embedded database and leverages the
 [extensible data notation](https://github.com/edn-format/edn) (EDN) format and native Clojure maps, sequences,
 and functions to provide an idiomatic in-memory document store with persistence.
 
-**GardenDB is still in alpha and changing rapidly. The API is somewhat stable but may change. GardenDB is NOT for
-production use at this time. USE AT OWN RISK.**
+## Use Cases
+* local persisted cache
+* single instance web sites
+* single instance services
+* single instance desktop applications
+* ?
+
+## Caveats
+* no indexing [may in the future] (entire collection scans per query, but intermediate temporary collections may be used (like views in CouchDB); see Usage temporary collection :into section below)
+* Single in-memory instance only (see below)
+
+## In-Memory, Single Instance Limitations (currently)
+
+Note that the canoncial representation is the in-memory data structure so if there are multiple GardenDB sessions on the SAME gardendb db file, each session will overwrite the modifications of the other sessions. In other words, there is (currently) no synchronization between the persistence layer and the in-memory gardendb data structures.
+
+However, if there are multiple gardendb db files then each of those db files may have one (1) running gardendb instances per db file. In other words, each gardendb db file is independent of each other.
+
+## Mulit-Version Concurrent Control in GardendDB
+
+Distributed synchronized gardendb nodes may be added in the future since revision ids are baked into GardenDB.
+
+Currently revision control functions locally to the in-memory instance, meaning that if revision control is enabled, multi-version concurrency control (MVCC) is used (leveraging revision ids) to handle multiple threads/actors in the same JVM session.
+
+The implementation in GardenDB is similiar to how CouchDB handles MVCC.
+
+The MVCC mechanism is in-place for the distributed components/functionality but resources to develop the distributed capability have not been allocated. 
+
+## Disclaimer
+
+**GardenDB is still in alpha and may change significantly. The API is somewhat stable but may change. GardenDB is NOT for production use at this time. USE AT OWN RISK.**
 
 ## Why is the name GardenDB?
 
@@ -33,6 +61,10 @@ output true or false).
 ## Documentation
 * <a href="http://gardendb.org/api/" target="_blank">API</a>
 * [Wiki](http://github.com/gardendb/gardendb/wiki)
+
+## Future Enhancements
+* Currently the gardendb is stored in a monolithic, single file. Moving forward, developers should have the option of persisting the db as a file system folder, with collections as folders underneath the db folder, and each document in the collection will have a folder underneath their collection folder. This will allow incremental persistence of documents without forcing unnecessary i/o to write the entire db every persist (upsert/delete).
+* Also allow an option to store in a relational database (Oracle, MySQL, SQL Server, PostgreSQL) since many developers do not control their enterprise data storage layer and may wish to use GardenDB for storage.
 
 ## Usage
 
