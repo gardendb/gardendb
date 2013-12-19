@@ -15,7 +15,7 @@ and functions to provide an idiomatic in-memory document store with persistence.
 
 GardenDB is designed for small to medium data in Clojure and has many convenience features.
 
-GardenDB provides document-oriented, NoSQL function, including revisioning of documents (much like CouchDB) as well as granular control via the idiomatic Clojure API to persist, backup, revision, and query via predicate Clojure functions (input a map, output true or false).
+GardenDB provides document-oriented, NoSQL function, including revisioning of documents (much like CouchDB) as well as granular control via idiomatic Clojure API to persist, backup, revision, and query via predicate Clojure functions (input a map, output true or false).
 
 ## Disclaimer
 
