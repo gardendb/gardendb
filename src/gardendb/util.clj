@@ -16,7 +16,7 @@
         (str (subs fnm 0 ldot) (if (> ldot 0) ".") t (subs fnm ldot))))))
 
 (defn file-ts
-  "Returns timestamp of with format 'yyyyMMdd'. Uses current time if not date is specified (or nil)."
+  "Returns timestamp of with format 'yyyyMMdd'. Uses current time if no date is specified (or nil)."
   [& [d]]
   (.format (java.text.SimpleDateFormat. "yyyyMMdd") (or d (java.util.Date.))))
 
