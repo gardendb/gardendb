@@ -19,7 +19,7 @@ GardenDB provides document-oriented, NoSQL function, including revisioning of do
 
 ## Disclaimer
 
-**GardenDB is still in alpha and may change significantly. The API is somewhat stable but may change. GardenDB is NOT for production use at this time. USE AT OWN RISK.**
+GardenDB is still in alpha and may change significantly. The API is somewhat stable but may change. GardenDB is NOT for production use at this time. USE AT OWN RISK.
 
 ## Why is the name GardenDB?
 
