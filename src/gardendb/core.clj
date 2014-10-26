@@ -185,7 +185,46 @@
   []
   (reduce #(if (collection-volatile? %2) (conj % %2) %) nil (collections)))
 
+(defn persist-file!
+  [loc]
+  (let [l (or loc (db-fn))
+        w (writer l)]
+    (.write w persist-file-header)
+    (.write w (str ";; " (java.util.Date.) "\n"
+                   ";; " l "\n"
+                   "\n\n"))
+    (pprint (apply (partial dissoc @store) (volatile-filter)) w)
+    l))
+
+(defn persist-folder!
+  "Persists db as a folder structure for more scalable i/o."
+  []
+  nil)
+
 (defn persist!
+  "Persists the garden db to storage with optional argument map m. Currently only supports file based.
+   {:loc string-location
+    :host string-host
+    :path string-path
+    :hint keyword-hint (not currently used)
+    :force? true|false ; true for force persistence regardless of persists? db setting
+    :suppress? true|false ; true to suppress persistence regardless of persists? db setting
+  }"
+  [& [{loc :loc
+       proto :protocol
+       host :host
+       path :path
+       hint :hint
+       force? :force?
+       suppress? :suppress?
+       :as m}]]
+  (let [h (or hint :none)]
+    (if (and (or @persists? force?) (not suppress?))
+      (cond
+       (= :file @protocol) (persist-file! loc)
+       (= :folder @protocol) (persist-folder! loc)))))
+
+(defn persist-old!
   "Persists the garden db to storage with optional argument map m. Currently only supports file based.
    {:loc string-location
     :host string-host

@@ -3,11 +3,10 @@
   (:require [gardendb.core :as db]
            [clojure.java.io :as io]))
 
-(def fruit {:fruit
-               {:cherry {:_id :cherry :_rev "1-a" :_v 1 :color :red :region :temperate}
-                :apple {:_id :apple :_rev "1-b" :_v 1 :color :green :region :temperate}
-                :rasp {:_id :rasp :_rev "1-c" :_v 1 :color :red :region :temperate}
-                :banana {:_id :banana :_rev "1-d" :_v 1 :color :yellow :region :tropical}}})
+(def fruit {:fruit {:cherry {:_id :cherry :_rev "1-a" :_v 1 :color :red :region :temperate}
+                    :apple {:_id :apple :_rev "1-b" :_v 1 :color :green :region :temperate}
+                    :rasp {:_id :rasp :_rev "1-c" :_v 1 :color :red :region :temperate}
+                    :banana {:_id :banana :_rev "1-d" :_v 1 :color :yellow :region :tropical}}})
 
 (def jazz {:jazz {:torme {:_id :torme :fn "Mel" :ln "Torme" :instrument :vocals}
                   :monk {:_id :monk :fn "Thelonious" :ln "Monk" :instrument :sax}
