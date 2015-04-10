@@ -50,7 +50,7 @@ Note that the canoncial representation is the in-memory data structure so if the
 
 However, if there are multiple gardendb db files then each of those db files may have one (1) running gardendb instances per db file. In other words, each gardendb db file is independent of each other.
 
-## Mulit-Version Concurrent Control in GardendDB
+## Multi-Version Concurrent Control in GardendDB
 
 Distributed synchronized gardendb nodes may be added in the future since revision ids are baked into GardenDB.
 
@@ -120,7 +120,7 @@ user=> (db/documents :jazz)
 []
 ```
 
-#### Adding documents
+#### Adding / upserting documents
 ```clojure
 user=> (db/put! :jazz {:_id :torme :fn "Mel" :ln "Torme" :alias "The Velvet Fog" :instrument :vocals})
 nil
@@ -223,8 +223,56 @@ user=> (db/delete! :jazz :getz)
 user=> (db/document :jazz :getz)
 nil
 ```
+
+### Multi-Version Concurrency Control
+GardenDb also offers multi-version concurrency control (MVCC) via revision keys,
+similar to how CouchDB handles MVCC.
+
+```clojure
+user=> (db/initialize! :clear? true :db-name :jazz :revisions? true)
+{:revisions? true, :db-name :jazz, :clear? true}
+user=> (db/put! :jazz {:_id :torme :fn "Mel" :ln "Torme" :alias "The Velvet Fog" :instrument :vocals})
+:torme
+user=> (db/document :jazz :torme)
+{:_v 1, :_rev :1-fb8c0609320d48d482b019716ff2204c, :instrument :vocals, :ln "Torme", :_id :torme, :alias "The Velvet Fog", :fn "Mel"}
+user=> (def r1 (:_rev (db/document :jazz :torme)))
+#'user/r1
+user=> r1
+:1-fb8c0609320d48d482b019716ff2204c
+user=> (db/put! :jazz {:_id :torme :fn "Mel" :ln "Torme" :alias "Velvet Fog, The" :instrument :vocals})
+
+Exception Revision control failed for document {:instrument :vocals, :ln "Torme", :_id :torme, :alias "Velvet Fog, The", :fn "Mel"}: previous rev: :1-fb8c0609320d48d482b019716ff2204c; given rev:   gardendb.core/upsert-locking!/fn--1510 (core.clj:632)
+user=> (db/document :jazz :torme)
+{:_v 1, :_rev :1-fb8c0609320d48d482b019716ff2204c, :instrument :vocals, :ln "Torme", :_id :torme, :alias "The Velvet Fog", :fn "Mel"}
+user=> (db/put! :jazz {:_id :torme :fn "Mel" :ln "Torme" :alias "Velvet Fog, The" :instrument :vocals} r1)
+:torme
+user=> (db/document :jazz :torme)
+{:_v 2, :_rev :2-8cfc6fb2aa6341d397060d5ae0790ac4, :instrument :vocals, :ln "Torme", :_id :torme, :alias "Velvet Fog, The", :fn "Mel"}
+user=> (db/revision :jazz :torme 1)
+{:_revised #inst "2015-04-10T00:46:42.442-00:00", :_v 1, :_rev :1-fb8c0609320d48d482b019716ff2204c, :instrument :vocals, :ln "Torme", :_id :torme, :alias "The Velvet Fog", :fn "Mel"}
+user=> (db/revision-versions :jazz :torme)
+(1)
+user=> (def r2 (:_rev (db/document :jazz :torme)))
+#'user/r2
+user=> r2
+:2-8cfc6fb2aa6341d397060d5ae0790ac4
+user=> (db/put! :jazz {:_id :torme :fn "Mel" :ln "Torme" :alias "El Velvet Fog" :instrument :vocals} r2)
+:torme
+user=> (db/document :jazz :torme)
+{:_v 3, :_rev :3-af987023cea04c08b651feb96abd0ce8, :instrument :vocals, :ln "Torme", :_id :torme, :alias "El Velvet Fog", :fn "Mel"}
+user=> (db/revision-versions :jazz :torme)
+(1 2)
+user=> (db/revision :jazz :torme 2)
+{:_revised #inst "2015-04-10T00:50:27.940-00:00", :_v 2, :_rev :2-8cfc6fb2aa6341d397060d5ae0790ac4, :instrument :vocals, :ln "Torme", :_id :torme, :alias "Velvet Fog, The", :fn "Mel"}
+user=> (db/info)
+{:host "", :db-name :jazz, :path "", :protocol :file, :revisions? true, :revision-levels 10, :persists? false, :options {}}
+```
+
+**NOTE** : The revision are *complete* copies of the document.
+
+
 ## License
 
-Copyright © 2013 GardenDB.org
+Copyright © 2015 GardenDB.org
 
 Distributed under the Eclipse Public License, the same as Clojure.
