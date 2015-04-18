@@ -102,7 +102,7 @@ Other considerations and suggestions:
 ### Dependencies
 
 ```clojure
-[org.clojars.gardendb/gardendb "0.1.8"]
+[gardendb "0.2.0"]
 ```
 
 ### Quick Start
