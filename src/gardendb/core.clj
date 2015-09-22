@@ -1,6 +1,7 @@
 (ns gardendb.core
   (:require [gardendb.util :as util]
             [clojure.pprint :refer [pprint]]
+            [clojure.edn :as edn]
             [clojure.java.io :refer [writer]]))
 
 ;; constants, atoms, and atom resetters --------------------------------------
@@ -177,7 +178,7 @@
   (let [l (or loc (db-fn))]
     (if (.exists (java.io.File. l))
       (do
-        (reset! store (load-string (slurp l)))
+        (reset! store (edn/read (java.io.PushbackReader. (clojure.java.io/reader l))))
         :loaded))))
 
 (defn volatile-filter
